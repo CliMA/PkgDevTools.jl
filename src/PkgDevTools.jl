@@ -6,6 +6,7 @@ using Pkg
 using Base:UUID
 using REPL.TerminalMenus
 
+include("compat.jl")
 include("utils.jl")
 
 """
