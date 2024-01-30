@@ -17,26 +17,15 @@ Select from a few menus and let
 environments you requested.
 """
 function update_deps(root = pwd(); precompile = false)
-    # ENV does not always have JULIA_PKG_PRECOMPILE_AUTO
-    # precompile_value = ENV["JULIA_PKG_PRECOMPILE_AUTO"]
-    x = "JULIA_PKG_PRECOMPILE_AUTO"
-    precompile₀ = haskey(ENV, x) ? ENV[x] : nothing
-    if !precompile
-        @info "Setting ENV[$x] = 0 temporarily"
-        ENV[x] = 0
-    end
-    envs = select_environments(root)
-    update_form = select_update_form(root, envs)
-    if precompile
-        @info "Updating environments. This may take some time. Feel free to take a walk 🚶..."
-    else
-        @info "Updating environments. Skipping precompilation."
-    end
-    _up_deps(root; update_form, dirs=envs)
-    if !precompile
-        if isnothing(precompile₀); pop!(ENV, x)
-        else; ENV[x] = precompile₀
+    with_precompile_set(; precompile) do
+        envs = select_environments(root)
+        update_form = select_update_form(root, envs)
+        if precompile
+            @info "Updating environments. This may take some time. Feel free to take a walk 🚶..."
+        else
+            @info "Updating environments. Skipping precompilation."
         end
+        _up_deps(root; update_form, dirs=envs)
     end
     return nothing
 end
@@ -92,18 +81,11 @@ function add_to_deps(
     else
         @info "Updating environments. Skipping precompilation."
     end
-    _add_to_deps(pkgname; version, branch, compat, root, update_form, dirs=envs, precompile)
-end
-function _add_to_deps(pkgname; version, branch, compat, root, update_form, dirs, precompile)
-    # ENV does not always have JULIA_PKG_PRECOMPILE_AUTO
-    # precompile_value = ENV["JULIA_PKG_PRECOMPILE_AUTO"]
-    x = "JULIA_PKG_PRECOMPILE_AUTO"
-    precompile₀ = haskey(ENV, x) ? ENV[x] : nothing
-    if !precompile
-        @info "Setting ENV[$x] = 0 temporarily"
-        ENV[x] = 0
+    with_precompile_set(; precompile) do
+        _add_to_deps(pkgname; version, branch, compat, root, update_form, dirs=envs)
     end
-
+end
+function _add_to_deps(pkgname; version, branch, compat, root, update_form, dirs)
     ver = if isnothing(version)
         ""
     else
@@ -145,12 +127,6 @@ function _add_to_deps(pkgname; version, branch, compat, root, update_form, dirs,
     for dir in dirs
         cd(dir) do
             rm("LocalPreferences.toml"; force = true)
-        end
-    end
-
-    if !precompile
-        if isnothing(precompile₀); pop!(ENV, x)
-        else; ENV[x] = precompile₀
         end
     end
     return nothing
