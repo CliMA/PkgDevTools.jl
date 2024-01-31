@@ -10,13 +10,13 @@ include("compat.jl")
 include("utils.jl")
 
 """
-    update_deps(root = pwd(); precompile = false)
+    update_deps(root = pwd(); pkg = nothing, precompile = false)
 
 Select from a few menus and let
 `PkgDevTools` update all the (selected)
 environments you requested.
 """
-function update_deps(root = pwd(); precompile = false)
+function update_deps(root = pwd(); pkg = nothing, precompile = false)
     with_precompile_set(; precompile) do
         envs = select_environments(root)
         update_form = select_update_form(root, envs)
@@ -25,21 +25,31 @@ function update_deps(root = pwd(); precompile = false)
         else
             @info "Updating environments. Skipping precompilation."
         end
-        _up_deps(root; update_form, dirs=envs)
+        _up_deps(root; pkg, update_form, dirs=envs)
     end
     return nothing
 end
-function _up_deps(root; update_form, dirs)
+function _up_deps(root; pkg, update_form, dirs)
     cd(root) do
         for dir in dirs
             reldir = relpath(dir, root)
             @info "Updating environment `$reldir`"
-            cmd = if update_form[dir]==:main
-                `$(Base.julia_cmd()) --project -e """import Pkg; Pkg.update()"""`
-            elseif update_form[dir]==:no_develop
-                `$(Base.julia_cmd()) --project=$reldir -e """import Pkg; Pkg.update()"""`
-            elseif update_form[dir]==:develop
-                `$(Base.julia_cmd()) --project=$reldir -e """import Pkg; Pkg.develop(;path=\".\"); Pkg.update()"""`
+            if isnothing(pkg)
+                cmd = if update_form[dir]==:main
+                    `$(Base.julia_cmd()) --project -e """import Pkg; Pkg.update()"""`
+                elseif update_form[dir]==:no_develop
+                    `$(Base.julia_cmd()) --project=$reldir -e """import Pkg; Pkg.update()"""`
+                elseif update_form[dir]==:develop
+                    `$(Base.julia_cmd()) --project=$reldir -e """import Pkg; Pkg.develop(;path=\".\"); Pkg.update()"""`
+                end
+            else
+                cmd = if update_form[dir]==:main
+                    `$(Base.julia_cmd()) --project -e """import Pkg; Pkg.update(\"$pkg\")"""`
+                elseif update_form[dir]==:no_develop
+                    `$(Base.julia_cmd()) --project=$reldir -e """import Pkg; Pkg.update(\"$pkg\")"""`
+                elseif update_form[dir]==:develop
+                    `$(Base.julia_cmd()) --project=$reldir -e """import Pkg; Pkg.develop(;path=\".\"); Pkg.update(\"$pkg\")"""`
+                end
             end
             run(cmd)
         end
