@@ -11,7 +11,7 @@ Here are some of the API functions (most use REPL tools, so you can follow promp
 ```julia
 using PkgDevTools
 update_deps([dir]) # update dependencies across environments
-add_to_deps("SomePackage"; #=branch=,version=,compat= =#) # add dependency across many environments
+add_to_deps("SomePackage"; #=branch=,version=,compat=,url= =#) # add dependency across many environments
 synchronize_compats([dir]) # synchronize compat entries across multiple environments
 compat_kick_start([dir]) # suggest new compat entries in a folder with a Project.toml and Manifest.toml.
 ```
