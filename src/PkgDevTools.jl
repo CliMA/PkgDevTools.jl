@@ -65,21 +65,23 @@ end
 
 """
     add_to_deps(
-        pkgname;
+        name = nothing;
         version = nothing,
         branch = nothing,
+        url = nothing,
         compat=nothing,
         root = pwd()
     )
 
 Select from a few menus and let
-`add_to_deps` adds `pkgname` to
+`add_to_deps` adds `name` to
 the environments you specify.
 """
 function add_to_deps(
-        pkgname;
+        name = nothing;
         branch = nothing,
         version = nothing,
+        url = nothing,
         compat=nothing,
         root = pwd(),
         precompile = false,
@@ -92,31 +94,25 @@ function add_to_deps(
         @info "Updating environments. Skipping precompilation."
     end
     with_precompile_set(; precompile) do
-        _add_to_deps(pkgname; version, branch, compat, root, update_form, dirs=envs)
+        _add_to_deps(name; version, branch, url, compat, root, update_form, dirs=envs)
     end
 end
-function _add_to_deps(pkgname; version, branch, compat, root, update_form, dirs)
-    ver = if isnothing(version)
-        ""
-    else
-        ", version=\"$version\""
-    end
-    _branch = if isnothing(branch)
-        ""
-    else
-        ", rev=\"$branch\""
-    end
-    name = "name=\"$pkgname\""
+function _add_to_deps(name; version, branch, url, compat, root, update_form, dirs)
+    ver = isnothing(version) ? "" : "version=\"$version\""
+    _branch = isnothing(branch) ? "" : "rev=\"$branch\""
+    _url = isnothing(url) ? "" : "url=\"$url\""
+    _name = isnothing(name) ? "" : "name=\"$name\""
+    kwargs = join(filter(x->!isempty(x), (_name, ver,_branch,_url)), ",")
     cd(root) do
         for dir in dirs
             reldir = relpath(dir, root)
             @info "Updating environment `$reldir`"
             cmd = if update_form[dir]==:main
-                `$(Base.julia_cmd()) --project -e """import Pkg; Pkg.add(Pkg.PackageSpec(;$name$ver$_branch))"""`
+                `$(Base.julia_cmd()) --project -e """import Pkg; Pkg.add(Pkg.PackageSpec(;$kwargs))"""`
             elseif update_form[dir]==:no_develop
-                `$(Base.julia_cmd()) --project=$reldir -e """import Pkg; Pkg.add(Pkg.PackageSpec(;$name$ver$_branch))"""`
+                `$(Base.julia_cmd()) --project=$reldir -e """import Pkg; Pkg.add(Pkg.PackageSpec(;$kwargs))"""`
             elseif update_form[dir]==:develop
-                `$(Base.julia_cmd()) --project=$reldir -e """import Pkg; Pkg.develop(;path=\".\"); Pkg.add(Pkg.PackageSpec(;$name$ver$_branch))"""`
+                `$(Base.julia_cmd()) --project=$reldir -e """import Pkg; Pkg.develop(;path=\".\"); Pkg.add(Pkg.PackageSpec(;$kwargs))"""`
             end
             run(cmd)
 
