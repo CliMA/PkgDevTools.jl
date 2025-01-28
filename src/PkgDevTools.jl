@@ -10,15 +10,23 @@ include("compat.jl")
 include("utils.jl")
 
 """
-    update_deps(root = pwd(); pkg = nothing, precompile = false)
+    update_deps(
+        root = pwd();
+        pkg = nothing,
+        precompile = false,
+        auto_all = false
+    )
 
-Select from a few menus and let
-`PkgDevTools` update all the (selected)
-environments you requested.
+Select from a few menus and let `PkgDevTools` update all the
+(selected) environments you requested.
+
+Setting `auto_all = true` will automatically update all environments, and `dev`
+the base directory.
 """
-function update_deps(root = pwd(); pkg = nothing, precompile = false)
+function update_deps(root = pwd(); pkg = nothing, precompile = false, auto_all = false)
     with_precompile_set(; precompile) do
-        envs = select_environments(root)
+        envs = auto_all ? project_dirs(root) : select_environments(root)
+        main_pkg = auto_all ? root : select_main_pkg(root, envs)
         update_form = select_update_form(root, envs)
         if precompile
             @info "Updating environments. This may take some time. Feel free to take a walk 🚶..."

@@ -113,8 +113,7 @@ function has_tracked_manifest(dir)
     return false
 end
 
-function select_update_form(root, envs)
-    main_pkg = select_main_pkg(root, envs)
+function select_update_form(root, envs, main_pkg = select_main_pkg(root, envs))
     update_form = Dict()
     for (i, env) in enumerate(envs)
         # has_tracked_manifest(env) # this will also skip test/
