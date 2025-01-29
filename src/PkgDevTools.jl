@@ -27,7 +27,7 @@ function update_deps(root = pwd(); pkg = nothing, precompile = false, auto_all =
     with_precompile_set(; precompile) do
         envs = auto_all ? project_dirs(root) : select_environments(root)
         main_pkg = auto_all ? root : select_main_pkg(root, envs)
-        update_form = select_update_form(root, envs)
+        update_form = select_update_form(root, envs, main_pkg)
         if precompile
             @info "Updating environments. This may take some time. Feel free to take a walk 🚶..."
         else
