@@ -75,7 +75,7 @@ end
     add_to_deps(
         name = nothing;
         version = nothing,
-        branch = nothing,
+        rev = nothing,
         url = nothing,
         compat=nothing,
         root = pwd()
@@ -87,7 +87,7 @@ the environments you specify.
 """
 function add_to_deps(
         name = nothing;
-        branch = nothing,
+        rev = nothing,
         version = nothing,
         url = nothing,
         compat=nothing,
@@ -102,15 +102,15 @@ function add_to_deps(
         @info "Updating environments. Skipping precompilation."
     end
     with_precompile_set(; precompile) do
-        _add_to_deps(name; version, branch, url, compat, root, update_form, dirs=envs)
+        _add_to_deps(name; version, rev, url, compat, root, update_form, dirs=envs)
     end
 end
-function _add_to_deps(name; version, branch, url, compat, root, update_form, dirs)
+function _add_to_deps(name; version, rev, url, compat, root, update_form, dirs)
     ver = isnothing(version) ? "" : "version=\"$version\""
-    _branch = isnothing(branch) ? "" : "rev=\"$branch\""
+    _rev = isnothing(rev) ? "" : "rev=\"$rev\""
     _url = isnothing(url) ? "" : "url=\"$url\""
     _name = isnothing(name) ? "" : "name=\"$name\""
-    kwargs = join(filter(x->!isempty(x), (_name, ver,_branch,_url)), ",")
+    kwargs = join(filter(x->!isempty(x), (_name, ver,_rev,_url)), ",")
     cd(root) do
         for dir in dirs
             reldir = relpath(dir, root)
